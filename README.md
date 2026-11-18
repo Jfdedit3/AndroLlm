@@ -1,22 +1,19 @@
 # AndroLinux
 
-Android launcher for ARM64 Linux distributions via **Termux + proot-distro**. No root required.
+Standalone Android ARM64 Linux runtime project, inspired by DroidDeck's no-Termux installation flow.
 
-## Features
-- Select Debian, Ubuntu, Alpine Linux or Arch Linux (availability depends on your proot-distro version)
-- Install, launch and remove distributions via Termux
-- Open interactive terminal sessions
-- GitHub Actions builds a debug APK artifact named `AndroLinux-APK`
+## Current implementation
+Android application that downloads ARM64 Linux rootfs archives into app-private storage. No Termux dependency.
 
-## Requirements
-1. Install a recent Termux from F-Droid or its official GitHub releases. Do not mix Termux sources.
-2. In Termux: `pkg update && pkg install proot-distro`.
-3. Run `mkdir -p ~/.termux && echo 'allow-external-apps=true' >> ~/.termux/termux.properties`, then restart Termux.
-4. Grant AndroLinux the Termux RUN_COMMAND permission when prompted.
-5. Select and install a distro in AndroLinux.
+**Important:** Linux execution, PRoot native runtime, extraction, terminal, desktop and distribution boot are NOT implemented yet. This is a development milestone, not a functional Linux runner. The UI explicitly reports this.
 
-## Limitations
-This is **not a standalone Linux VM**. It requires Termux and PRoot-Distro and shares the Android kernel. Linux desktop GUI and VNC setup are not yet implemented. The app sends commands to Termux; command output is shown in Termux, not embedded in the app. Distribution names depend on PRoot-Distro availability. Android may restrict background execution.
+## Planned runtime
+- Build/package Android-compatible ARM64 PRoot binary with NDK
+- Verify checksums, safely extract rootfs tarballs (reject path traversal)
+- Launch rootfs using bundled PRoot without Termux
+- Interactive PTY terminal and later a software-rendered desktop
 
-## Build
-Push to main or run GitHub Actions > Build AndroLinux APK > Run workflow. Download the `AndroLinux-APK` artifact from a successful run.
+DroidDeck reference: https://github.com/Droid-Deck/DroidDeck (GPL-3.0). This project does not copy DroidDeck's runtime binaries.
+
+## APK
+GitHub Actions > Build AndroLinux APK > artifact AndroLinux-APK.
