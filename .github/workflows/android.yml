@@ -1,51 +1,52 @@
 name: Build AndroLinux Native Runtime APK
 on:
-  workflow_dispatch:
   push:
     branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  android:
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - name: Checkout AndroLinux
-        uses: actions/checkout@v4
-      - name: Checkout complete native Linux runtime
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           repository: oonid/pr
           path: native-runtime
-          submodules: recursive
+      - name: Fetch runtime submodules
+        working-directory: native-runtime
+        run: |
+          git -c url."https://github.com/".insteadOf=git@github.com: submodule update --init --depth 1 vendor/samba vendor/termlib
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: 1.97.1
           targets: aarch64-linux-android
-      - name: Install build dependencies
+      - name: Install NDK and link for Rust
         run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build pkg-config clang make autoconf automake libtool
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-35" "build-tools;35.0.0" || true
-      - name: Build patched PRoot for ARM64
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018"
+          mkdir -p native-runtime/build/ndk
+          ln -s "$ANDROID_HOME/ndk/27.2.12479018" native-runtime/build/ndk/android-ndk-r27c
+      - name: Build patched PRoot
         working-directory: native-runtime
-        run: bash scripts/build.sh --arch=arm64
-      - name: Build native pr-cli and guest tests
+        run: ./scripts/build.sh --arch=arm64 --ndk-path="$ANDROID_HOME/ndk/27.2.12479018"
+      - name: Build Rust Linux command-line runtime
         working-directory: native-runtime
-        run: bash scripts/build-pr-cli.sh
-      - name: Package native engine
+        run: ./scripts/build-pr-cli.sh
+      - name: Embed PRoot in APK
         run: |
-          mkdir -p native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a
           cp native-runtime/build/out/arm64/proot native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot.so
           cp native-runtime/build/out/arm64/loader native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot-loader.so
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build functional Linux runner APK
+      - name: Build Android APK
         working-directory: native-runtime/android
-        run: bash ./gradlew --no-daemon :app:assembleDebug
-      - name: Verify artifact
+        run: ./gradlew --no-daemon :app:assembleDebug
+      - name: Verify APK
         run: test -s native-runtime/android/app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
