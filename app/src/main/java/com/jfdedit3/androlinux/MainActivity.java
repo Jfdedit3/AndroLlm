@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
  env.put("LANG","en_US.UTF-8");
  pb.directory(home);
  runOnUiThread(()->status.setText("Exécution : "+java.util.Arrays.toString(args)));
- Process proc=pb.start();
+ java.lang.Process proc=pb.start();
  StringBuilder output=new StringBuilder();
  try(BufferedReader reader=new BufferedReader(new InputStreamReader(proc.getInputStream()))){
  String line;
