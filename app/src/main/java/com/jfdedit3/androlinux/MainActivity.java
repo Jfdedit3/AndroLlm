@@ -38,11 +38,13 @@ public class MainActivity extends Activity {
 
  void repairPackages(){
  if(selected==0){message("Cette réparation dpkg concerne Ubuntu et Debian.");return;}
- execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a");
+ execute("login",aliases[selected],"--","/bin/sh","-c",
+ "export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get -y -f install && dpkg --configure -a");
  }
  void installDesktop(){
  if(selected==0){message("XFCE automatique est actuellement prévu pour Ubuntu et Debian. Choisis Ubuntu ou Debian.");return;}
- execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get update && apt-get install -y --no-install-recommends xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
+ execute("login",aliases[selected],"--","/bin/sh","-c",
+ "export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get -y -f install && apt-get update && apt-get install -y --no-install-recommends xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
  }
  void startDesktop(){
  if(selected==0){message("Sélectionne Ubuntu ou Debian pour démarrer XFCE.");return;}
