@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build AndroLinux APK
 on:
   push:
     branches: [main]
@@ -11,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fetch llama.cpp source
-        run: |
-          git clone --depth 1 https://github.com/ggml-org/llama.cpp.git llama.cpp
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -21,16 +18,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.10.2'
-      - name: Install Android SDK and NDK
+      - name: Install Android SDK
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" "ndk;27.2.12479018" "cmake;3.22.1"
-      - name: Build debug APK
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build APK
         run: gradle --no-daemon :app:assembleDebug
       - name: Verify APK
         run: test -s app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: AndroLlm-local-GGUF-apk
+          name: AndroLinux-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 30

@@ -1,25 +1,22 @@
-# AndroLlm
+# AndroLinux
 
-Android LLM chat client, inspired by Stable Diffusion WebUI. **Version 0.1.0 (MVP)**.
+Android launcher for ARM64 Linux distributions via **Termux + proot-distro**. No root required.
 
-## Available
-- Dark Android chat UI
-- OpenAI-compatible chat completion API (llama.cpp server, LM Studio, compatible remote providers)
-- Configurable URL, model, API key and system prompt
-- Conversation context within the current chat session
-- GitHub Actions build of a debug APK
+## Features
+- Select Debian, Ubuntu, Alpine Linux or Arch Linux (availability depends on your proot-distro version)
+- Install, launch and remove distributions via Termux
+- Open interactive terminal sessions
+- GitHub Actions builds a debug APK artifact named `AndroLinux-APK`
 
-## Not implemented yet
-- **On-device GGUF inference**, model downloads, streaming tokens, persistent chat history and advanced sampling controls.
-- This APK is a client, not a standalone offline inference engine.
+## Requirements
+1. Install a recent Termux from F-Droid or its official GitHub releases. Do not mix Termux sources.
+2. In Termux: `pkg update && pkg install proot-distro`.
+3. Run `mkdir -p ~/.termux && echo 'allow-external-apps=true' >> ~/.termux/termux.properties`, then restart Termux.
+4. Grant AndroLinux the Termux RUN_COMMAND permission when prompted.
+5. Select and install a distro in AndroLinux.
+
+## Limitations
+This is **not a standalone Linux VM**. It requires Termux and PRoot-Distro and shares the Android kernel. Linux desktop GUI and VNC setup are not yet implemented. The app sends commands to Termux; command output is shown in Termux, not embedded in the app. Distribution names depend on PRoot-Distro availability. Android may restrict background execution.
 
 ## Build
-GitHub Actions > Build Android APK > Run workflow, or push to main.
-Download artifact `AndroLlm-debug-apk` from the successful workflow run.
-Locally: JDK 17, Android SDK 35, Gradle 8.10.2; run `gradle :app:assembleDebug`.
-
-## Connect to llama.cpp
-Start an OpenAI-compatible llama.cpp server on your computer with network access, e.g. `llama-server -m model.gguf --host 0.0.0.0 --port 8080`.
-On Android configure `http://YOUR_PC_LAN_IP:8080/v1/chat/completions`. Use only trusted LAN servers; HTTP is not encrypted. For remote providers use HTTPS. API keys are stored in app preferences, not encrypted.
-
-Minimum Android 8.0. Debug APK is signed with Android's development key; not for Play Store distribution.
+Push to main or run GitHub Actions > Build AndroLinux APK > Run workflow. Download the `AndroLinux-APK` artifact from a successful run.
