@@ -43,6 +43,10 @@ jobs:
           cp native-runtime/build/out/arm64/proot native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot.so
           cp native-runtime/build/out/arm64/loader native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot-loader.so
       - uses: gradle/actions/setup-gradle@v4
+      - name: Fix unavailable upstream Kotlin plugin versions
+        run: |
+          sed -i 's/version "2.4.21"/version "2.2.21"/g' native-runtime/android/build.gradle.kts
+          grep -n 'kotlin' native-runtime/android/build.gradle.kts
       - name: Build Android APK
         working-directory: native-runtime/android
         run: ./gradlew --no-daemon :app:assembleDebug
