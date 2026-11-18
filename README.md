@@ -1,19 +1,11 @@
-# AndroLinux
+# AndroLinux native ARM64
 
-Standalone Android ARM64 Linux runtime project, inspired by DroidDeck's no-Termux installation flow.
+This repository now builds a **real standalone Linux distribution runner** using the open-source [oonid/pr](https://github.com/oonid/pr) Android runtime as its engine and UI. It does **not** require Termux. It supports Alpine, Debian, Ubuntu and other ARM64 OCI images, with interactive terminal, installation, launch and removal.
 
-## Current implementation
-Android application that downloads ARM64 Linux rootfs archives into app-private storage. No Termux dependency.
+## Build
+GitHub Actions → **Build AndroLinux Native Runtime APK** → Run workflow. Download the `AndroLinux-Native-ARM64-APK` artifact after the workflow succeeds.
 
-**Important:** Linux execution, PRoot native runtime, extraction, terminal, desktop and distribution boot are NOT implemented yet. This is a development milestone, not a functional Linux runner. The UI explicitly reports this.
+## Important status and scope
+The GitHub Actions build fetches and compiles the upstream Android app, including patched PRoot, Rust pr-cli, and terminal. It **does not yet rebrand the upstream application or add an XFCE desktop**. Its application ID and appearance are those of the upstream `pr` app. This is a functional upstream-based baseline, not a custom integrated AndroLinux UI. Android device runtime has not been tested in this repository.
 
-## Planned runtime
-- Build/package Android-compatible ARM64 PRoot binary with NDK
-- Verify checksums, safely extract rootfs tarballs (reject path traversal)
-- Launch rootfs using bundled PRoot without Termux
-- Interactive PTY terminal and later a software-rendered desktop
-
-DroidDeck reference: https://github.com/Droid-Deck/DroidDeck (GPL-3.0). This project does not copy DroidDeck's runtime binaries.
-
-## APK
-GitHub Actions > Build AndroLinux APK > artifact AndroLinux-APK.
+This is Linux userspace via PRoot, not a separate kernel/VM. See upstream license and notices: https://github.com/oonid/pr .

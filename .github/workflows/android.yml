@@ -1,33 +1,54 @@
-name: Build AndroLinux APK
+name: Build AndroLinux Native Runtime APK
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-  pull_request:
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout AndroLinux
+        uses: actions/checkout@v4
+      - name: Checkout complete native Linux runtime
+        uses: actions/checkout@v4
+        with:
+          repository: oonid/pr
+          path: native-runtime
+          submodules: recursive
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          gradle-version: '8.10.2'
-      - name: Install Android SDK
+          targets: aarch64-linux-android
+      - name: Install build dependencies
         run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
-      - name: Build APK
-        run: gradle --no-daemon :app:assembleDebug
-      - name: Verify APK
-        run: test -s app/build/outputs/apk/debug/app-debug.apk
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config clang make autoconf automake libtool
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.2.12479018" "platforms;android-35" "build-tools;35.0.0" || true
+      - name: Build patched PRoot for ARM64
+        working-directory: native-runtime
+        run: bash scripts/build.sh --arch=arm64
+      - name: Build native pr-cli and guest tests
+        working-directory: native-runtime
+        run: bash scripts/build-pr-cli.sh
+      - name: Package native engine
+        run: |
+          mkdir -p native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a
+          cp native-runtime/build/out/arm64/proot native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot.so
+          cp native-runtime/build/out/arm64/loader native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot-loader.so
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build functional Linux runner APK
+        working-directory: native-runtime/android
+        run: bash ./gradlew --no-daemon :app:assembleDebug
+      - name: Verify artifact
+        run: test -s native-runtime/android/app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: AndroLinux-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: AndroLinux-Native-ARM64-APK
+          path: native-runtime/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          retention-days: 30
