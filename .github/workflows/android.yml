@@ -47,13 +47,23 @@ jobs:
         run: |
           sed -i 's/version "2.4.21"/version "2.2.21"/g' native-runtime/android/build.gradle.kts
           grep -n 'kotlin' native-runtime/android/build.gradle.kts
-      - name: Build Android APK
+      - name: Build upstream engine library
         working-directory: native-runtime/android
-        run: ./gradlew --no-daemon :app:assembleDebug
-      - name: Verify APK
-        run: test -s native-runtime/android/app/build/outputs/apk/debug/app-debug.apk
+        run: ./gradlew --no-daemon :proot-engine:assembleDebug
+      - name: Copy ARM64 runtime into AndroLinux application
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          cp native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot.so app/src/main/jniLibs/arm64-v8a/
+          cp native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libproot-loader.so app/src/main/jniLibs/arm64-v8a/
+          cp native-runtime/android/proot-engine/src/main/jniLibs/arm64-v8a/libpr-cli.so app/src/main/jniLibs/arm64-v8a/
+      - name: Build original AndroLinux APK
+        run: gradle --no-daemon :app:assembleDebug
+      - name: Verify original AndroLinux APK
+        run: test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Verify embedded runtime
+        run: unzip -l app/build/outputs/apk/debug/app-debug.apk | grep 'lib/arm64-v8a/libproot.so'
       - uses: actions/upload-artifact@v4
         with:
           name: AndroLinux-Native-ARM64-APK
-          path: native-runtime/android/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
