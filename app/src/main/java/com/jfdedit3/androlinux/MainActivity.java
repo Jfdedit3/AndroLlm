@@ -11,7 +11,8 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
  final ExecutorService worker=Executors.newSingleThreadExecutor();
  LinearLayout root;TextView status;int selected=0;
- final String[] names={"Alpine Linux ARM64","Ubuntu Base ARM64"};
+ final String[] names={"Alpine Linux ARM64","Ubuntu ARM64","Debian ARM64"};
+ final String[] aliases={"alpine","ubuntu","debian"};
  final String[] urls={"https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.8-aarch64.tar.gz","https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.3-base-arm64.tar.gz"};
  TextView text(String s,int n){TextView t=new TextView(this);t.setText(s);t.setTextColor(-1);t.setTextSize(n);t.setPadding(12,12,12,12);return t;}
  Button button(String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setOnClickListener(v->r.run());return b;}
@@ -29,6 +30,58 @@ public class MainActivity extends Activity {
  root.addView(text("Version de préparation : les archives téléchargées ne sont pas encore extraites. Aucun environnement Linux n'est lancé. L'intégration PRoot natif et d'un terminal reste nécessaire.",13));update();
  }
  void update(){if(status!=null)status.setText("Archive : "+(archive().exists()?archive().length()/1048576+" Mio":"non téléchargée"));}
+
+ void console(){
+ final EditText input=new EditText(this);input.setSingleLine(false);input.setText("uname -a");
+ new AlertDialog.Builder(this).setTitle("Commande Linux : "+aliases[selected]).setView(input)
+ .setNegativeButton("Annuler",null).setPositiveButton("Exécuter",(d,w)->execute("login",aliases[selected],"--",input.getText().toString())).show();
+ }
+ void execute(String... args){
+ worker.execute(()->{
+ try{
+ File prefix=new File(getFilesDir(),"usr");
+ File home=new File(getFilesDir(),"home");
+ for(String dir:new String[]{"bin","tmp","etc/pr","var/lib/pr/installed-rootfs","var/lib/pr/dlcache"})new File(prefix,dir).mkdirs();
+ home.mkdirs();
+ File lib=new File(getApplicationInfo().nativeLibraryDir);
+ for(String name:new String[]{"proot","pr-cli"}){
+ File target=new File(lib,"lib"+name+".so");
+ File link=new File(prefix,"bin/"+name);
+ if(!target.isFile())throw new IOException("Binaire absent : "+target);
+ if(!link.exists())android.system.Os.symlink(target.getAbsolutePath(),link.getAbsolutePath());
+ }
+ java.util.ArrayList<String> cmd=new java.util.ArrayList<>();
+ cmd.add(new File(prefix,"bin/pr-cli").getAbsolutePath());
+ java.util.Collections.addAll(cmd,args);
+ ProcessBuilder pb=new ProcessBuilder(cmd).redirectErrorStream(true);
+ java.util.Map<String,String> env=pb.environment();
+ env.put("APP_PREFIX",prefix.getAbsolutePath());
+ env.put("APP_HOME",home.getAbsolutePath());
+ env.put("APP_PACKAGE",getPackageName());
+ env.put("HOME",home.getAbsolutePath());
+ env.put("PATH",new File(prefix,"bin").getAbsolutePath()+":/system/bin");
+ env.put("PROOT_NO_SECCOMP","1");
+ env.put("PROOT_TMP_DIR",getCacheDir().getAbsolutePath());
+ env.put("TMPDIR",getCacheDir().getAbsolutePath());
+ env.put("TERM","xterm-256color");
+ env.put("LANG","en_US.UTF-8");
+ pb.directory(home);
+ runOnUiThread(()->status.setText("Exécution : "+java.util.Arrays.toString(args)));
+ Process proc=pb.start();
+ StringBuilder output=new StringBuilder();
+ try(BufferedReader reader=new BufferedReader(new InputStreamReader(proc.getInputStream()))){
+ String line;
+ while((line=reader.readLine())!=null){
+ if(output.length()<20000)output.append(line).append((char)10);
+ final String progress=line;
+ runOnUiThread(()->status.setText(progress));
+ }
+ }
+ int exit=proc.waitFor();
+ message("Code retour : "+exit+"\\n"+output.toString());
+ }catch(Exception ex){message("Erreur Linux : "+ex.toString());}
+ });
+ }
  void download(){final int index=selected;final File target=archive();worker.execute(()->{try{
  target.getParentFile().mkdirs();HttpURLConnection conn=(HttpURLConnection)new URL(urls[index]).openConnection();conn.setConnectTimeout(20000);conn.setReadTimeout(30000);if(conn.getResponseCode()!=200)throw new IOException("HTTP "+conn.getResponseCode());
  File part=new File(target.getPath()+".part");try(InputStream in=conn.getInputStream();OutputStream out=new FileOutputStream(part)){byte[] buf=new byte[65536];int n;while((n=in.read(buf))!=-1)out.write(buf,0,n);}
