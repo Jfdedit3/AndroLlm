@@ -26,6 +26,7 @@ public class MainActivity extends Activity {
  Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onNothingSelected(android.widget.AdapterView<?> p){}public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){selected=pos;update();}});root.addView(spinner);
  status=text("",15);root.addView(status);
  root.addView(button("1 · Installer la distribution",()->execute("install",images[selected],"--override-alias",aliases[selected])));
+ root.addView(button("Réparer les paquets Ubuntu/Debian",()->repairPackages()));
  root.addView(button("2 · Installer XFCE + VNC",()->installDesktop()));
  root.addView(button("3 · Démarrer le bureau graphique",()->startDesktop()));
  root.addView(button("Terminal · Exécuter une commande",()->console()));
@@ -35,9 +36,13 @@ public class MainActivity extends Activity {
  }
  void update(){if(status!=null)status.setText("Distribution : "+aliases[selected]);}
 
+ void repairPackages(){
+ if(selected==0){message("Cette réparation dpkg concerne Ubuntu et Debian.");return;}
+ execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a");
+ }
  void installDesktop(){
  if(selected==0){message("XFCE automatique est actuellement prévu pour Ubuntu et Debian. Choisis Ubuntu ou Debian.");return;}
- execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; apt-get update && apt-get install -y xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
+ execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get update && apt-get install -y --no-install-recommends xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
  }
  void startDesktop(){
  if(selected==0){message("Sélectionne Ubuntu ou Debian pour démarrer XFCE.");return;}
