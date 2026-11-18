@@ -2,6 +2,9 @@ plugins { id 'com.android.application' }
 android {
  namespace 'com.jfdedit3.androlinux'
  compileSdk 35
+ packaging {
+  jniLibs { useLegacyPackaging true }
+ }
  defaultConfig {
   applicationId 'com.jfdedit3.androlinux'
   minSdk 26
