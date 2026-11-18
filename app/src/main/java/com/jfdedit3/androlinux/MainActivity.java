@@ -24,12 +24,12 @@ public class MainActivity extends Activity {
  root.addView(text("🐧 AndroLinux",28));root.addView(text("Gestionnaire de rootfs ARM64 autonome · sans Termux",15));
  Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onNothingSelected(android.widget.AdapterView<?> p){}public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){selected=pos;update();}});root.addView(spinner);
  status=text("",15);root.addView(status);
- root.addView(button("Télécharger le rootfs",()->download()));
+ root.addView(text("Installation native via image OCI : utilise « Installer Linux ».",14));
  root.addView(button("Lancer Linux",()->message("Le moteur PRoot Android natif n'est pas encore intégré. Cette version prépare le téléchargement des rootfs, mais ne lance pas Linux.")));
  root.addView(button("Supprimer l'archive",()->{archive().delete();update();}));
  root.addView(text("Version de préparation : les archives téléchargées ne sont pas encore extraites. Aucun environnement Linux n'est lancé. L'intégration PRoot natif et d'un terminal reste nécessaire.",13));update();
  }
- void update(){if(status!=null)status.setText("Archive : "+(archive().exists()?archive().length()/1048576+" Mio":"non téléchargée"));}
+ void update(){if(status!=null)status.setText("Distribution : "+aliases[selected]);}
 
  void console(){
  final EditText input=new EditText(this);input.setSingleLine(false);input.setText("uname -a");
