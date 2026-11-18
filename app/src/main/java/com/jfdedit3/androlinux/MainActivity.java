@@ -13,6 +13,7 @@ public class MainActivity extends Activity {
  LinearLayout root;TextView status;int selected=0;
  final String[] names={"Alpine Linux ARM64","Ubuntu ARM64","Debian ARM64"};
  final String[] aliases={"alpine","ubuntu","debian"};
+ final String[] images={"docker.io/library/alpine:latest","docker.io/library/ubuntu:latest","docker.io/library/debian:stable"};
  final String[] urls={"https://dl-cdn.alpinelinux.org/alpine/v3.20/releases/aarch64/alpine-minirootfs-3.20.8-aarch64.tar.gz","https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.3-base-arm64.tar.gz"};
  TextView text(String s,int n){TextView t=new TextView(this);t.setText(s);t.setTextColor(-1);t.setTextSize(n);t.setPadding(12,12,12,12);return t;}
  Button button(String s,Runnable r){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setOnClickListener(v->r.run());return b;}
@@ -24,17 +25,28 @@ public class MainActivity extends Activity {
  root.addView(text("🐧 AndroLinux",28));root.addView(text("Gestionnaire de rootfs ARM64 autonome · sans Termux",15));
  Spinner spinner=new Spinner(this);spinner.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){public void onNothingSelected(android.widget.AdapterView<?> p){}public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){selected=pos;update();}});root.addView(spinner);
  status=text("",15);root.addView(status);
- root.addView(text("Installation native via image OCI : utilise « Installer Linux ».",14));
- root.addView(button("Lancer Linux",()->message("Le moteur PRoot Android natif n'est pas encore intégré. Cette version prépare le téléchargement des rootfs, mais ne lance pas Linux.")));
- root.addView(button("Supprimer l'archive",()->{archive().delete();update();}));
- root.addView(text("Version de préparation : les archives téléchargées ne sont pas encore extraites. Aucun environnement Linux n'est lancé. L'intégration PRoot natif et d'un terminal reste nécessaire.",13));update();
+ root.addView(button("1 · Installer la distribution",()->execute("install",images[selected],"--override-alias",aliases[selected])));
+ root.addView(button("2 · Installer XFCE + VNC",()->installDesktop()));
+ root.addView(button("3 · Démarrer le bureau graphique",()->startDesktop()));
+ root.addView(button("Terminal · Exécuter une commande",()->console()));
+ root.addView(button("Supprimer la distribution",()->new AlertDialog.Builder(this).setTitle("Supprimer "+aliases[selected]+" ?").setNegativeButton("Annuler",null).setPositiveButton("Supprimer",(d,w)->execute("remove",aliases[selected])).show()));
+ root.addView(text("Le bureau graphique nécessite XFCE et TigerVNC dans la distribution. Le serveur VNC est local au téléphone. Le client VNC intégré n'est pas encore disponible.",13));
+ update();
  }
  void update(){if(status!=null)status.setText("Distribution : "+aliases[selected]);}
 
- void console(){
+ void installDesktop(){
+ if(selected==0){message("XFCE automatique est actuellement prévu pour Ubuntu et Debian. Choisis Ubuntu ou Debian.");return;}
+ execute("login",aliases[selected],"--","/bin/sh","-c","export DEBIAN_FRONTEND=noninteractive; apt-get update && apt-get install -y xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
+ }
+ void startDesktop(){
+ if(selected==0){message("Sélectionne Ubuntu ou Debian pour démarrer XFCE.");return;}
+ execute("login",aliases[selected],"--","/bin/sh","-c","mkdir -p ~/.vnc; printf '#!/bin/sh\\nexec startxfce4\\n' > ~/.vnc/xstartup; chmod +x ~/.vnc/xstartup; vncserver -localhost yes -SecurityTypes None -geometry 1280x720 -depth 24 :1");
+ }
+  void console(){
  final EditText input=new EditText(this);input.setSingleLine(false);input.setText("uname -a");
  new AlertDialog.Builder(this).setTitle("Commande Linux : "+aliases[selected]).setView(input)
- .setNegativeButton("Annuler",null).setPositiveButton("Exécuter",(d,w)->execute("login",aliases[selected],"--",input.getText().toString())).show();
+ .setNegativeButton("Annuler",null).setPositiveButton("Exécuter",(d,w)->execute("login",aliases[selected],"--","/bin/sh","-c",input.getText().toString())).show();
  }
  void execute(String... args){
  worker.execute(()->{
