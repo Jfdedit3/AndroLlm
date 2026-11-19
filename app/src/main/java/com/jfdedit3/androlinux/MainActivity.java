@@ -27,11 +27,11 @@ public class MainActivity extends Activity {
  status=text("",15);root.addView(status);
  root.addView(button("1 · Installer la distribution",()->execute("install",images[selected],"--override-alias",aliases[selected])));
  root.addView(button("Réparer les paquets Ubuntu/Debian",()->repairPackages()));
- root.addView(button("2 · Installer XFCE + VNC",()->installDesktop()));
+ root.addView(button("2 · Installer KDE Plasma + VNC",()->installDesktop()));
  root.addView(button("3 · Démarrer le bureau graphique",()->startDesktop()));
  root.addView(button("Terminal · Exécuter une commande",()->console()));
  root.addView(button("Supprimer la distribution",()->new AlertDialog.Builder(this).setTitle("Supprimer "+aliases[selected]+" ?").setNegativeButton("Annuler",null).setPositiveButton("Supprimer",(d,w)->execute("remove",aliases[selected])).show()));
- root.addView(text("Le bureau graphique nécessite XFCE et TigerVNC dans la distribution. Le serveur VNC est local au téléphone. Le client VNC intégré n'est pas encore disponible.",13));
+ root.addView(text("Le bureau graphique nécessite KDE Plasma (session X11) et TigerVNC dans la distribution. Le serveur VNC est local au téléphone. Le client VNC intégré n'est pas encore disponible.",13));
  update();
  }
  void update(){if(status!=null)status.setText("Distribution : "+aliases[selected]);}
@@ -42,13 +42,13 @@ public class MainActivity extends Activity {
  "export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get -y -f install && dpkg --configure -a");
  }
  void installDesktop(){
- if(selected==0){message("XFCE automatique est actuellement prévu pour Ubuntu et Debian. Choisis Ubuntu ou Debian.");return;}
+ if(selected==0){message("KDE Plasma est actuellement prévu pour Ubuntu et Debian. Choisis Ubuntu ou Debian.");return;}
  execute("login",aliases[selected],"--","/bin/sh","-c",
- "export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get -y -f install && apt-get update && apt-get install -y --no-install-recommends xfce4 xfce4-terminal tigervnc-standalone-server dbus-x11");
+ "export DEBIAN_FRONTEND=noninteractive; dpkg --configure -a && apt-get -y -f install && apt-get update && apt-get install -y --no-install-recommends plasma-desktop plasma-workspace konsole tigervnc-standalone-server dbus-x11");
  }
  void startDesktop(){
- if(selected==0){message("Sélectionne Ubuntu ou Debian pour démarrer XFCE.");return;}
- execute("login",aliases[selected],"--","/bin/sh","-c","mkdir -p ~/.vnc; printf '#!/bin/sh\\nexec startxfce4\\n' > ~/.vnc/xstartup; chmod +x ~/.vnc/xstartup; vncserver -localhost yes -SecurityTypes None -geometry 1280x720 -depth 24 :1");
+ if(selected==0){message("Sélectionne Ubuntu ou Debian pour démarrer KDE Plasma.");return;}
+ execute("login",aliases[selected],"--","/bin/sh","-c","mkdir -p ~/.vnc; printf '#!/bin/sh\\nexport XDG_SESSION_TYPE=x11\\nexport XDG_CURRENT_DESKTOP=KDE\\nexport DESKTOP_SESSION=plasma\\nexec dbus-launch --exit-with-session startplasma-x11\\n' > ~/.vnc/xstartup; chmod +x ~/.vnc/xstartup; vncserver -localhost yes -SecurityTypes None -geometry 1280x720 -depth 24 :1");
  }
   void console(){
  final EditText input=new EditText(this);input.setSingleLine(false);input.setText("uname -a");
