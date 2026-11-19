@@ -23,7 +23,8 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y zstd golang-go python3 docker.io gh
+          sudo apt-get install -y zstd golang-go python3 gh
+          docker --version
           rustup target add aarch64-linux-android
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018" "platform-tools"
       - name: Build original DroidDeck runtime and Plasma application
