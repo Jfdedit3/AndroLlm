@@ -31,6 +31,8 @@ jobs:
           docker --version
           rustup target add aarch64-linux-android
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;27.2.12479018" "platform-tools"
+      - name: Enable ARM64 binfmt for upstream tests
+        run: docker run --privileged --rm tonistiigi/binfmt --install arm64
       - name: Build original DroidDeck runtime and Plasma application
         env:
           DROIDDECK_BUILD_VARIANT: debug
